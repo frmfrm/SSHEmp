@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+	
+	<package name="emp" namespace="/" extends="struts-default">
+		<global-results>
+			<result name="fail" type="redirect">fail.jsp</result>
+		</global-results>
+		<!-- 与spring整合以后，{2}Action由spring容器创建 -->
+		<action name="*_*" class="{2}Action" method="{1}">
+			<result name="ok" type="redirect">${path}</result>
+		</action>
+	</package>
+</struts>    

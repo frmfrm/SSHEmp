@@ -1,0 +1,79 @@
+show-View ---->spring ------>show
+Action 由spring容器创建 由spring容器销毁
+因为Spring将原先一次性活动的Action 管理器来了  也就是Action不再是一次性的 所以在添加员工的时候，
+第一次马超选了图片，第二次添加马岱没选图片的时候  马岱的图片依旧是马超的图片   ====>spring将马超的信息保存起来了  
+和马超的信息做了合并  
+解决方法：在添加和修改完成以后 将员工对象置空
+
+
+一、struts2+Spring+Hibernate的整合步骤
+1、依次引入struts2、spring、hibernate组件包
+2、生成实体类和DAO类,并自动将sessionFactory和DAO类注入到spring的配置文件中
+3、编写业务和控制器类。并且构建编写DaoService和BizService类代理所有的Dao类和Biz类
+4、在applicationContext.xml文件中注入业务和控制器组件
+5、在applicationContext.xml文件配置声明式事务管理。
+6、配置struts.xml文件
+************************************************************************************
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+	<constant name="struts.ui.theme" value="simple"></constant>
+	<constant name="struts.custom.i18n.resources" value="msg" />
+	
+	<package name="emp" namespace="/" extends="struts-default">
+		<global-results>
+			<result name="fail" type="redirect">fail.jsp</result>
+		</global-results>
+		<!-- 与spring整合以后，{2}Action由spring容器创建 -->
+		<action name="*_*" class="{2}Action" method="{1}">
+			<result name="ok" type="redirect">${path}</result>
+		</action>
+	</package>
+</struts>    
+************************************************************************************
+7、在web.xml中配置spring启动和session已关闭异常处理的过滤器
+************************************************************************************
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" 
+	xmlns="http://java.sun.com/xml/ns/javaee" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+	http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+  <display-name></display-name>	
+  <!-- spring容器的启动 -->
+   <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:applicationContext.xml</param-value>
+    </context-param>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    
+   <!-- session已关闭异常的过滤器 -->
+    <filter>
+        <filter-name>OpenSessionInViewFilter</filter-name>
+        <filter-class>org.springframework.orm.hibernate3.support.OpenSessionInViewFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>OpenSessionInViewFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+  <filter>
+  	<filter-name>struts2</filter-name>
+  	<filter-class>
+  		org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter
+  	</filter-class>
+  </filter>
+  <filter-mapping>
+  	<filter-name>struts2</filter-name>
+  	<url-pattern>/*</url-pattern>
+  </filter-mapping>
+</web-app> 
+************************************************************************************
+
+
+8、编写页面测试

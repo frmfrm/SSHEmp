@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+		
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		
+		">
+
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName"
+			value="com.mysql.jdbc.Driver">
+		</property>
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/empdb">
+		</property>
+		<property name="username" value="root"></property>
+		<property name="password" value="mysql"></property>
+	</bean>
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>com/po/Dep.hbm.xml</value>
+				<value>com/po/Users.hbm.xml</value>
+				<value>com/po/Welfare.hbm.xml</value>
+				<value>com/po/Empwelfare.hbm.xml</value>
+				<value>com/po/Salary.hbm.xml</value>
+				<value>com/po/Emp.hbm.xml</value></list>
+		</property></bean>
+		
+		
+	<bean id="DepDAO" class="com.dao.DepDAO">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="UsersDAO" class="com.dao.UsersDAO">
+	<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="WelfareDAO" class="com.dao.WelfareDAO">
+	<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="EmpwelfareDAO" class="com.dao.EmpwelfareDAO">
+	<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="SalaryDAO" class="com.dao.SalaryDAO">
+	<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="EmpDAO" class="com.dao.EmpDAO">
+	<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	
+	
+	<!--  注入dao的service -->
+	
+	<bean id="daos" class="com.service.DaoService">
+		<property name="depDAO" ref="DepDAO"></property>
+		<property name="empDAO" ref="EmpDAO"></property>
+		<property name="empwelfareDAO" ref="EmpwelfareDAO"></property>
+		<property name="salaryDAO" ref="SalaryDAO"></property>
+		<property name="usersDAO" ref="UsersDAO"></property>
+		<property name="welfareDAO" ref="WelfareDAO"></property>
+	</bean>
+	
+	<!-- 注入biz类 -->
+	<bean id="empBiz" class="com.biz.imp.EmpBizImp">
+		<property name="daoService" ref="daos"></property>
+	</bean>
+	<bean id="depBiz" class="com.biz.imp.DepBizImp">
+		<property  name="daoService" ref="daos"></property>
+	</bean>
+	<bean id="welfareBiz" class="com.biz.imp.WelfareBizImp">
+		<property name="daoService"  ref="daos"></property>
+	</bean>
+	<bean id="usersBiz" class="com.biz.imp.UsersBizImp">
+		<property name="daoService"  ref="daos"></property>
+	</bean>
+	
+	
+	<!--注入biz Service  -->
+	<bean id="bizs" class="com.service.BizService">
+		<property name="depBiz" ref="depBiz"></property>
+		<property name="empBiz" ref="empBiz"></property>
+		<property name="usersBiz" ref="usersBiz"></property>
+		<property name="welfareBiz" ref="welfareBiz"></property> 
+	</bean>
+
+	<!-- 注入控制器ACtion类 
+	id="EmpAction"  id一定要跟Action保持一致   满足约定式配置
+	-->
+	
+	<bean id="EmpAction" class="com.action.EmpAction">
+		<property name="bizService" ref="bizs"></property>
+	</bean>
+	<bean id="UsersAction" class="com.action.UsersAction">
+		<property name="bizService" ref="bizs"></property>
+	</bean>
+	<bean id="DepAction" class="com.action.DepAction">
+		<property name="bizService" ref="bizs"></property>
+	</bean>
+	<!-- 配置事务管理器 -->
+	<bean id="txmanager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>	
+	
+	<!-- 配置事务通知属性 -->
+	<tx:advice id="txavd" transaction-manager="txmanager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED"/>
+			<tx:method name="update*" propagation="REQUIRED"/>
+			<tx:method name="del*" propagation="REQUIRED"/>
+			<tx:method name="find*" propagation="NOT_SUPPORTED"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<!-- 配置事务的切入点(增强器) -->
+	<aop:config>
+		<aop:pointcut expression="execution(* com.biz.*.* (..))" id="bizpoint"/>
+		<aop:advisor advice-ref="txavd" pointcut-ref="bizpoint"/>
+	</aop:config>
+	
+	
+	
+	</beans>
